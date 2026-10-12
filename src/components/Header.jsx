@@ -1,13 +1,21 @@
 import SearchBar from "./SearchBar";
 
-export default function Header({ query, onQueryChange }) {
+export default function Header({ query, onQueryChange, onHome }) {
   return (
     <header className="header">
       <div className="header__inner container">
-        <div className="logo">
+        <a
+          className="logo"
+          href="/"
+          aria-label="BingeBoard home"
+          onClick={(e) => {
+            e.preventDefault();
+            onHome();
+          }}
+        >
           <span className="logo__mark" aria-hidden="true" />
           <span>BingeBoard</span>
-        </div>
+        </a>
         <SearchBar value={query} onChange={onQueryChange} />
       </div>
     </header>

@@ -1,8 +1,4 @@
-import { useState } from "react";
-
 export default function Footer() {
-  const [failed, setFailed] = useState(false);
-
   return (
     <footer className="footer">
       <div className="footer__inner container">
@@ -11,20 +7,17 @@ export default function Footer() {
           target="_blank"
           rel="noreferrer"
           aria-label="The Movie Database (TMDB)"
-          className="footer__link"
         >
-          {failed ? (
-            "TMDB"
-          ) : (
-            <img
-              className="footer__logo"
-              src="/tmdb-logo.svg"
-              alt="TMDB"
-              onError={() => setFailed(true)}
-            />
-          )}
+         <img
+  className="footer__logo"
+  src="https://www.themoviedb.org/assets/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg"
+  alt="TMDB"
+/>
         </a>
-        <p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+        <p>
+          This website uses TMDB and the TMDB APIs but is not endorsed, certified,
+          or otherwise approved by TMDB.
+        </p>
       </div>
     </footer>
   );

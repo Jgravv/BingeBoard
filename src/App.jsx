@@ -8,6 +8,8 @@ import StatusMessage from "./components/StatusMessage";
 import LoadMore from "./components/LoadMore";
 import ShowModal from "./components/ShowModal";
 import Footer from "./components/Footer";
+import PersonModal from "./components/PersonModal";
+import useModalHistory from "./hooks/useModalHistory";
 const PAGE_SIZE = 12;
 
 export default function App() {
@@ -18,9 +20,13 @@ export default function App() {
   const [sort, setSort] = useState("none");
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [selected, setSelected] = useState(null);
+  const [type, setType] = useState("movie");
+  const [personId, setPersonId] = useState(null);
+  const openCount = (selected ? 1 : 0) + (personId ? 1 : 0);
+  const closeTop = () => (personId ? setPersonId(null) : setSelected(null));
+  useModalHistory(openCount, closeTop);
 
-  const { shows, loading, error } = useShows(query, browse);
-
+  const { shows, loading, loadingMore, error, hasMore, loadMore } = useShows(query, browse, type);
   const genres = useMemo(
     () => [...new Set(shows.flatMap((s) => s.genres || []))].sort(),
     [shows]
@@ -53,18 +59,45 @@ export default function App() {
 
   const resetVisible = (fn) => (v) => { fn(v); setVisible(PAGE_SIZE); };
 
-  const title = query.trim() ? `Results for “${query.trim()}”` : "Discover shows";
+  const handleLoadMore = () => {
+  const next = visible + PAGE_SIZE;
+  setVisible(next);
+  if (hasMore && next > results.length - PAGE_SIZE) loadMore();
+};
+  const goHome = () => {
+    setQuery("");
+    setBrowse("popular");
+    setGenre("");
+    setMinRating(0);
+    setSort("none");
+    setType("movie");
+    setVisible(PAGE_SIZE);
+    setSelected(null);
+    setPersonId(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const changeType = (t) => { setType(t); setGenre(""); setVisible(PAGE_SIZE); };
+
+  const label = type === "movie" ? "movies" : "TV shows";
+  const title = query.trim() ? `Results for “${query.trim()}”` : `Discover ${label}`;
 
   return (
     <div className="app">
-      <Header query={query} onQueryChange={resetVisible(setQuery)} />
-
+      <Header query={query} onQueryChange={resetVisible(setQuery)} onHome={goHome} />
       <main className="container">
         <section className="hero">
           <h1>{title}</h1>
           <p className="hero__count">
-            {!loading && !error && `${results.length} ${results.length === 1 ? "show" : "shows"}`}
-          </p>
+            {!loading && !error && `${results.length}${hasMore ? "+" : ""} ${results.length === 1 ? "show" : "shows"}`}          </p>
+          <div className="tabs" aria-label="Content type">
+            <button className={type === "movie" ? "active" : ""} onClick={() => changeType("movie")}>
+              Movies
+            </button>
+            <button className={type === "tv" ? "active" : ""} onClick={() => changeType("tv")}>
+              TV shows
+            </button>
+          </div>
         </section>
 
         <div className="toolbar">
@@ -75,6 +108,8 @@ export default function App() {
             genre={genre}
             onGenre={resetVisible(setGenre)}
           />
+
+
           <FilterControls
             minRating={minRating}
             onMinRating={resetVisible(setMinRating)}
@@ -82,6 +117,7 @@ export default function App() {
             onSort={resetVisible(setSort)}
           />
         </div>
+
 
         {loading && <StatusMessage type="loading" message="Loading shows" />}
         {!loading && error && (
@@ -97,14 +133,31 @@ export default function App() {
             <LoadMore
               shown={Math.min(visible, results.length)}
               total={results.length}
-              onClick={() => setVisible((v) => v + PAGE_SIZE)}
+              hasMore={hasMore}
+              loading={loadingMore}
+              onClick={handleLoadMore}
             />
           </>
         )}
       </main>
 
-      {selected && <ShowModal show={selected} onClose={() => setSelected(null)} />}
-              <Footer />
+      {selected && (
+        <ShowModal
+          key={`${selected.type}-${selected.id}`}
+          show={selected}
+          onClose={() => setSelected(null)}
+          onSelectPerson={setPersonId}
+        />
+      )}
+
+      {personId && (
+        <PersonModal
+          id={personId}
+          onClose={() => setPersonId(null)}
+          onSelectShow={(s) => { setPersonId(null); setSelected(s); }}
+        />
+      )}
+      <Footer />
 
     </div>
   );
